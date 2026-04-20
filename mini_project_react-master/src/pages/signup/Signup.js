@@ -1,247 +1,224 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import AxiosApi from "../../api/AxiosApi";
-import Input from "../../component/Input";
-import Button from "../../component/Button";
-import logoImg from "../../images/logo.png";
-
 import {
-  Container,
-  LoginBox,
+  PageWrapper,
+  Card,
   LogoArea,
-  TabMenu,
-  Items,
+  TabBar,
+  Tab,
+  Field,
+  StyledInput,
+  SubmitButton,
+  Hint,
 } from "../../style/LoginStyle";
-import Modal from "../../component/Modal";
 
+import Modal from "../../component/Modal";
+import AxiosApi from "../../api/AxiosApi";
+import imgLogo from "../../images/logo.png";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+
+/* ========================= */
+const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+const PW_REGEX = /^(?=.*[a-zA-Z])(?=.*[0-9]).{4,25}$/;
+
+/* ========================= */
 const Signup = () => {
   const navigate = useNavigate();
 
-  // 상태 관리
-  const [inputPw, setInputPw] = useState("");
-  const [inputConPw, setInputConPw] = useState("");
-  const [inputName, setInputName] = useState("");
   const [inputEmail, setInputEmail] = useState("");
-  const [inputMajor, setInputMajor] = useState("");
-  const [inputYear, setInputYear] = useState("");
+  const [inputPw, setInputPw] = useState("");
+  const [inputNick, setInputNick] = useState("");
 
-  // 유효성 상태
-  const [pwMessage, setPwMessage] = useState("");
-  const [conPwMessage, setConPwMessage] = useState("");
-  const [mailMessage, setMailMessage] = useState("");
+  const [dept, setDept] = useState(""); // 학과 직접입력
+  const [year, setYear] = useState(""); // 학번 직접입력
+
+  const [showPw, setShowPw] = useState(false);
+
+  const [emailMsg, setEmailMsg] = useState("");
+  const [pwMsg, setPwMsg] = useState("");
   const [isMail, setIsMail] = useState(false);
   const [isPw, setIsPw] = useState(false);
-  const [isConPw, setIsConPw] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalText, setModalText] = useState("");
+
   const closeModal = () => setModalOpen(false);
 
-  // 이메일 유효성 및 중복 체크
-  const onChangeMail = (e) => {
-    const currentEmail = e.target.value;
-    setInputEmail(currentEmail);
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-    if (!emailRegex.test(currentEmail)) {
-      setMailMessage("이메일 형식이 올바르지 않습니다.");
-      setIsMail(false);
-    } else {
-      checkEmailDuplicate(currentEmail);
-    }
-  };
+  const canSubmit =
+    isMail && isPw && dept.trim() && year.trim() && inputNick.trim();
 
-  const checkEmailDuplicate = async (email) => {
+  /* =========================
+     EMAIL CHECK
+  ========================= */
+  const onChangeEmail = async (e) => {
+    const val = e.target.value;
+    setInputEmail(val);
+
+    if (!EMAIL_REGEX.test(val)) {
+      setEmailMsg("이메일 형식이 올바르지 않습니다.");
+      setIsMail(false);
+      return;
+    }
+
     try {
-      const rsp = await AxiosApi.checkEmail(email);
+      const rsp = await AxiosApi.checkEmail(val);
+
       if (rsp.data.success && rsp.data.data) {
-        setMailMessage("사용 가능한 이메일 입니다.");
+        setEmailMsg("사용 가능한 이메일입니다.");
         setIsMail(true);
       } else {
-        setMailMessage("중복된 이메일 입니다.");
+        setEmailMsg("중복된 이메일입니다.");
         setIsMail(false);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
+      setEmailMsg("이메일 확인 실패");
+      setIsMail(false);
     }
   };
 
+  /* =========================
+     PASSWORD CHECK
+  ========================= */
   const onChangePw = (e) => {
-    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9]).{4,25}$/;
-    setInputPw(e.target.value);
-    if (!passwordRegex.test(e.target.value)) {
-      setPwMessage("숫자+영문자 조합으로 4자리 이상 입력해주세요!");
+    const val = e.target.value;
+    setInputPw(val);
+
+    if (!PW_REGEX.test(val)) {
+      setPwMsg("숫자+영문자 조합 4자 이상");
       setIsPw(false);
     } else {
-      setPwMessage("안전한 비밀번호에요 : )");
+      setPwMsg("사용 가능한 비밀번호입니다.");
       setIsPw(true);
     }
   };
 
-  const onChangeConPw = (e) => {
-    setInputConPw(e.target.value);
-    if (e.target.value !== inputPw) {
-      setConPwMessage("비밀번호가 일치하지 않습니다.");
-      setIsConPw(false);
-    } else {
-      setConPwMessage("비밀번호가 일치합니다. :)");
-      setIsConPw(true);
-    }
-  };
-
-  const isAllValid =
-    isMail &&
-    isPw &&
-    isConPw &&
-    inputName.length > 0 &&
-    inputMajor.length > 0 &&
-    inputYear.length > 0;
-
+  /* =========================
+     SIGN UP
+  ========================= */
   const onClickSignUp = async () => {
-       if (!isAllValid) {
-            setModalOpen(true);
-            setModalText("모든 항목을 정확히 입력해야 가입이 가능합니다.");
-            return;
-          }
     try {
       const rsp = await AxiosApi.signUp(
         inputEmail,
         inputPw,
-        inputName,
-        inputMajor,
-        inputYear,
+        inputNick,
+        dept,
+        year,
       );
+
       if (rsp.data.success) {
         navigate("/");
       } else {
+        setModalText(rsp.data.message || "회원가입 실패");
         setModalOpen(true);
-        setModalText(rsp.data.message || "회원 가입에 실패 했습니다.");
       }
-    } catch (e) {
+    } catch {
+      setModalText("서버 오류 발생");
       setModalOpen(true);
-      setModalText("서버 연결 실패.");
     }
   };
 
   return (
-    <Container>
-      <LoginBox>
+    <PageWrapper>
+      <Card>
+        {/* LOGO */}
         <LogoArea>
-          {/* 2. [수정] 파란색 S 대신 이미지를 넣었습니다. */}
-          <img
-            src={logoImg}
-            alt="로고"
-            style={{
-              height: "40px",
-              marginRight: "10px",
-              verticalAlign: "middle",
-            }}
-          />
-          <span style={{ color: "#ff5a5f", verticalAlign: "middle" }}>
-            에브리휴먼타임
-          </span>
+          <img src={imgLogo} alt="logo" />
+          <span>에브리휴먼타임</span>
         </LogoArea>
 
-        <TabMenu>
-          <Link to="/">
-            <div>로그인</div>
-          </Link>
-          <div className="active">회원가입</div>
-        </TabMenu>
+        {/* TAB */}
+        <TabBar>
+          <Tab as={Link} to="/">
+            로그인
+          </Tab>
+          <Tab $active>회원가입</Tab>
+        </TabBar>
 
-        <Items>
-          <Input
+        {/* EMAIL */}
+        <Field>
+          <StyledInput
+            type="email"
             placeholder="이메일"
             value={inputEmail}
-            onChange={onChangeMail}
+            onChange={onChangeEmail}
           />
-          {inputEmail.length > 0 && (
-            <span
+          {inputEmail && <Hint $ok={isMail}>{emailMsg}</Hint>}
+        </Field>
+
+        {/* PASSWORD */}
+        <Field>
+          <div style={{ position: "relative" }}>
+            <StyledInput
+              type={showPw ? "text" : "password"}
+              placeholder="비밀번호"
+              value={inputPw}
+              onChange={onChangePw}
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPw((p) => !p)}
               style={{
-                fontSize: "11px",
-                marginTop: "5px",
-                color: isMail ? "royalblue" : "red",
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
               }}
             >
-              {mailMessage}
-            </span>
-          )}
-        </Items>
+              <FontAwesomeIcon icon={showPw ? faEyeSlash : faEye} />
+            </button>
+          </div>
 
-        <Items>
-          <Input
-            type="password"
-            placeholder="비밀번호"
-            value={inputPw}
-            onChange={onChangePw}
+          {inputPw && <Hint $ok={isPw}>{pwMsg}</Hint>}
+        </Field>
+
+        {/* NICKNAME */}
+        <Field>
+          <StyledInput
+            type="text"
+            placeholder="닉네임"
+            value={inputNick}
+            onChange={(e) => setInputNick(e.target.value)}
           />
-          {inputPw.length > 0 && (
-            <span
-              style={{
-                fontSize: "11px",
-                marginTop: "5px",
-                color: isPw ? "royalblue" : "red",
-              }}
-            >
-              {pwMessage}
-            </span>
-          )}
-        </Items>
+        </Field>
 
-        <Items>
-          <Input
-            type="password"
-            placeholder="비밀번호 확인"
-            value={inputConPw}
-            onChange={onChangeConPw}
+        {/* DEPARTMENT (직접 입력) */}
+        <Field>
+          <StyledInput
+            type="text"
+            placeholder="학과 입력"
+            value={dept}
+            onChange={(e) => setDept(e.target.value)}
           />
-          {inputConPw.length > 0 && (
-            <span
-              style={{
-                fontSize: "11px",
-                marginTop: "5px",
-                color: isConPw ? "royalblue" : "red",
-              }}
-            >
-              {conPwMessage}
-            </span>
-          )}
-        </Items>
+        </Field>
 
-        <Items>
-          <Input
-            placeholder="이름"
-            value={inputName}
-            onChange={(e) => setInputName(e.target.value)}
+        {/* YEAR (직접 입력) */}
+        <Field>
+          <StyledInput
+            type="text"
+            placeholder="학번 입력"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
           />
-        </Items>
+        </Field>
 
-        <Items>
-          <Input
-            placeholder="전공"
-            value={inputMajor}
-            onChange={(e) => setInputMajor(e.target.value)}
-          />
-        </Items>
+        {/* SUBMIT */}
+        <SubmitButton disabled={!canSubmit} onClick={onClickSignUp}>
+          NEXT
+        </SubmitButton>
+      </Card>
 
-        <Items>
-          <Input
-            placeholder="학번 (예: 20260413)"
-            value={inputYear}
-            onChange={(e) => setInputYear(e.target.value)}
-          />
-        </Items>
-
-        <Items style={{ marginTop: "20px" }}>
-          <Button disabled={!isAllValid} onClick={onClickSignUp}>
-            회원가입 하기
-          </Button>
-        </Items>
-      </LoginBox>
-
+      {/* MODAL */}
       <Modal open={modalOpen} close={closeModal} header="알림">
         {modalText}
       </Modal>
-    </Container>
+    </PageWrapper>
   );
 };
 

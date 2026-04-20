@@ -137,12 +137,18 @@
   border-bottom: 1px solid #f1f3f5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap; /* 텍스트 줄바꿈 절대 방지 */
+  min-width: 60px; /* 헤더가 텍스트를 담을 수 있는 최소 너비 확보 */
+  word-break: keep-all; /* 한글 단어가 끊기지 않게 함 */
 }
 
 .market-main-table td {
   padding: 24px 22px;
   border-bottom: 1px solid #f8f9fa;
   vertical-align: middle;
+  white-space: nowrap; /* 텍스트가 한 줄로만 나오게 함 */
+  overflow: hidden; /* 넘치는 부분 숨김 */
+  text-overflow: ellipsis; /* 너무 길면 ... 처리 (필요시) */
 }
 
 .book-row-item {
@@ -164,10 +170,38 @@
   display: flex;
   align-items: center;
   gap: 18px;
+  min-width: 220px;
 }
+.th-info {
+  width: auto;
+  min-width: 200px;
+}
+
+/* 나머지 항목들은 글자가 꺾이지 않는 최소한의 고정 px값을 줍니다. */
+.th-auth {
+  width: 100px;
+  min-width: 80px;
+}
+
+.th-cond {
+  width: 110px;
+  min-width: 100px;
+}
+
+.th-price {
+  width: 120px;
+  min-width: 110px;
+}
+
+.th-owner {
+  width: 100px;
+  min-width: 80px;
+}
+
 .thumb-container-ui {
   width: 65px;
   height: 65px;
+  flex-shrink: 0;
   border-radius: 12px;
   background: #f0f2f4;
   overflow: hidden;
@@ -202,10 +236,14 @@
 }
 
 .badge-ui {
+  display: inline-block; /* block 성질을 주어 형태 유지 */
   padding: 6px 14px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap; /* 배지 안의 글자 줄바꿈 절대 방지 */
+  min-width: 65px; /* 최소 너비 확보 */
+  text-align: center;
 }
 .badge-ui.lvl-s {
   background: #e3f2fd;
